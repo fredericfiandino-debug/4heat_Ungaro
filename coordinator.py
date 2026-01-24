@@ -63,6 +63,8 @@ class FourHeatDataUpdateCoordinator(DataUpdateCoordinator):
                 s.send(query)
                 result = s.recv(SOCKET_BUFFER).decode()
                 s.close()
+                _LOGGER.debug(f"Query sent: {query}")
+                _LOGGER.debug(f"Raw data received: {result}")
                 result = result.replace("[","")
                 result = result.replace("]","")
                 result = result.replace('"',"")

@@ -93,7 +93,7 @@ SENSOR_TYPES = {
 }
 
 MODE_NAMES = {
-    256: "OFF",
+    256: "Ignition",
     1: "Check Up",
     2: "Ignition",
     3: "Stabilization",
@@ -104,7 +104,7 @@ MODE_NAMES = {
     6: "Modulation",
     7: "Extinguishing",
     8: "Safety",
-    0: "Block",
+    0: "Off",
     10: "RecoverIgnition",
     11: "Standby",
     48: "Ignition",

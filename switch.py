@@ -96,9 +96,10 @@ class FourHeatSwitch(CoordinatorEntity, SwitchEntity):
     def state_attributes(self):
         try:
             if self.type == MODE_TYPE:
+                val = self.coordinator.data[self.type][0]
                 return {
-                    "Num Val": self.coordinator.data[self.type][0],
-                    "Val text": MODE_NAMES[self.coordinator.data[self.type][0]]
+                    "Num Val": val,
+                    "Val text": MODE_NAMES.get(val, "unknown-value")
                 }
             elif self.type == ERROR_TYPE:
                 return {"Num Val": self.coordinator.data[self.type][0]}
