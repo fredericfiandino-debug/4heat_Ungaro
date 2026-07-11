@@ -1,8 +1,8 @@
 {
   "domain": "4heat",
-  "version": "0.6.1",
+  "version": "0.0.1",
   "name": "4Heat Stove",
-  "documentation": "https://github.com/zaubererty/homeassistant-4heat",
+  "documentation": "https://github.com/fredericfiandino-debug/4heat_Ungaro/blob/main/manifest.json",
   "config_flow": true,
   "dependencies": [],
   "codeowners": ["@zaubererty"],
