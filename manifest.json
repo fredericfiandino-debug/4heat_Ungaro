@@ -1,11 +1,11 @@
 {
-  "domain": "4heat",
-  "version": "0.0.1",
-  "name": "4Heat Stove",
-  "documentation": "https://github.com/fredericfiandino-debug/4heat_Ungaro/blob/main/manifest.json",
+  "domain": "4heatlite",
+  "version": "0.1.0",
+  "name": "4heatlite Stove",
+  "documentation": "https://github.com/fredericfiandino-debug/4heat_Ungaro",
   "config_flow": true,
   "dependencies": [],
-  "codeowners": ["@zaubererty"],
+  "codeowners": ["@fredericfiandino-debug"],
   "requirements": [],
   "iot_class": "local_polling"
 }
