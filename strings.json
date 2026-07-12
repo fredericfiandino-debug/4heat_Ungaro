@@ -1,20 +1,36 @@
 {
-  "title": "4Heat",
+  "title": "4heatlite",
   "config": {
     "step": {
       "user": {
         "data": {
+          "name": "[%key:common::config_flow::data::name%]",
           "host": "[%key:common::config_flow::data::host%]"
         }
       }
     },
     "error": {
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    }
+  },
+  "services": {
+    "set_temperature": {
+      "name": "Régler la consigne de température",
+      "description": "Change la consigne de température (°C) d'un thermostat du poêle (ex: consigne ambiance).",
+      "fields": {
+        "entity_id": {
+          "name": "Entité",
+          "description": "Entité du capteur de consigne à modifier (ex: sensor.poele_consigne_temperature)."
+        },
+        "value": {
+          "name": "Température",
+          "description": "Nouvelle consigne en degrés Celsius, ex: 22.5"
+        }
+      }
     }
   }
 }
