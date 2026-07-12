@@ -93,5 +93,5 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     hass.services.async_register(DOMAIN, "set_temperature", async_handle_set_temperature)
 
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "switch"])
+    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "switch", "number"])
     return True

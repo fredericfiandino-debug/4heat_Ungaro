@@ -7,6 +7,7 @@ from homeassistant.components.sensor import SensorEntity
 
 from .const import (
     SENSOR_TYPES,
+    PARAM_VALUE_MAPS,
     DOMAIN,
     DATA_COORDINATOR,
     ATTR_STOVE_ID,
@@ -60,12 +61,17 @@ class FourHeatLiteSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self):
-        """Return the value, en tenant compte du diviseur (dixiemes de degre pour les temperatures)."""
+        """Return the value : traduit via table (puissances) ou divise (temperatures)."""
         if not self.coordinator.data or self.type not in self.coordinator.data:
             return self._last_value
 
         raw = self.coordinator.data[self.type]
-        value = raw / self._divisor if self._divisor != 1 else raw
+
+        if self.type in PARAM_VALUE_MAPS:
+            value = PARAM_VALUE_MAPS[self.type].get(raw, f"Unknown ({raw})")
+        else:
+            value = raw / self._divisor if self._divisor != 1 else raw
+
         self._last_value = value
         return value
 
