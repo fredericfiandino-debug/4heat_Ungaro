@@ -1,7 +1,5 @@
 """Config flow for the 4heatlite integration."""
-import json
 import logging
-import socket
 
 import voluptuous as vol
 
@@ -9,14 +7,8 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_NAME
 from homeassistant.core import HomeAssistant, callback
 
-from .const import (
-    DOMAIN,
-    DATA_QUERY,
-    SOCKET_BUFFER,
-    SOCKET_TIMEOUT,
-    TCP_PORT,
-    RESULT_DATA,
-)
+from .const import DOMAIN, DATA_QUERY, RESULT_DATA
+from .coordinator import _send_and_receive
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,16 +35,14 @@ class FourHeatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return host in four_heat_entries(self.hass)
 
     def _check_host(self, host) -> bool:
-        """Check if we can connect and get a valid 2WL response from the module."""
+        """Check if we can connect and get a valid 2WL response from the module.
+
+        Reutilise _send_and_receive (avec ses tentatives automatiques) car le
+        module refuse parfois une connexion s'il en traite deja une autre
+        (ex: appli officielle ouverte en meme temps).
+        """
         try:
-            data = json.dumps(DATA_QUERY, separators=(",", ":")).encode()
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(SOCKET_TIMEOUT)
-            s.connect((host, TCP_PORT))
-            s.send(data)
-            raw = s.recv(SOCKET_BUFFER).decode()
-            s.close()
-            response = json.loads(raw)
+            response = _send_and_receive(host, DATA_QUERY)
             return bool(response) and response[0] == RESULT_DATA
         except Exception as ex:
             _LOGGER.error("Impossible de se connecter au module 4heatlite : %s", ex)
