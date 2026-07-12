@@ -10,7 +10,6 @@ from datetime import timedelta
 from homeassistant.const import UnitOfTemperature
 
 DOMAIN = "4heatlite"
-DATA_COORDINATOR = "coordinator"
 
 ATTR_STOVE_ID = "stove_id"
 ATTR_READING_ID = "reading_id"
@@ -89,3 +88,36 @@ MODE_NAMES = {
     10: "Recover Ignition",  # RECUPERO ACCENSIONE
     11: "Standby",  # STANDBY
 }
+
+POWER_NAMES = {
+    1: "P1",
+    2: "P2",
+    3: "P3",
+    4: "P4",
+    5: "P5",
+    6: "P6",
+    7: "Auto",
+}
+#Non testé mais transfuge de l'ancien code
+ERROR_NAMES = {
+    0: "No",
+    1: "Safety Thermostat HV1: signalled also in case of Stove OFF",
+    2: "Safety PressureSwitch HV2: signalled with Combustion Fan ON",
+    3: "Extinguishing for Exhausting Temperature lowering",
+    4: "Extinguishing for water over Temperature",
+    5: "Extinguishing for Exhausting over Temperature",
+    6: "unknown",
+    7: "Encoder Error: No Encoder Signal (in case of P25=1 or 2)",
+    8: "Encoder Error: Combustion Fan regulation failed (in case of P25=1 or 2)",
+    9: "Low pressure in to the Boiler",
+    10: "High pressure in to the Boiler Error",
+    11: "DAY and TIME not correct due to prolonged absence of Power Supply",
+    12: "Failed Ignition",
+    13: "Ignition",
+    14: "Ignition",
+    15: "Lack of Voltage Supply",
+    16: "Ignition",
+    17: "Ignition",
+    18: "Lack of Voltage Supply",
+}
+
