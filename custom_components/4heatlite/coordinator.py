@@ -3,6 +3,7 @@ from datetime import timedelta
 import json
 import logging
 import socket
+import time
 
 from async_timeout import timeout
 from homeassistant.const import CONF_HOST
@@ -26,23 +27,54 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# Le module 4heatlite ne semble accepter qu'une connexion TCP a la fois et
+# refuse (ConnectionRefusedError) toute tentative pendant qu'il en traite
+# deja une autre (ex: appli officielle ouverte en meme temps, ou connexion
+# precedente pas encore liberee cote module). On tente donc plusieurs fois
+# avant d'abandonner.
+CONNECT_RETRIES = 3
+CONNECT_RETRY_DELAY = 2.0  # secondes
 
-def _send_and_receive(host: str, payload: list) -> list:
+
+def _send_and_receive(
+    host: str, payload: list, retries: int = CONNECT_RETRIES, retry_delay: float = CONNECT_RETRY_DELAY
+) -> list:
     """Envoie une commande JSON (liste) au module 4heatlite et renvoie la reponse parsee.
 
     IMPORTANT : separators=(",", ":") est obligatoire, le parseur du module
     est strict et rejette (["ERR","1","1"]) toute trame contenant un espace.
+
+    Reessaie automatiquement en cas de connexion refusee/timeout, avec une
+    courte pause entre les tentatives (fonction reutilisee telle quelle par
+    config_flow.py pour le test de connexion initial).
     """
     data = json.dumps(payload, separators=(",", ":")).encode()
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(SOCKET_TIMEOUT)
-    s.connect((host, TCP_PORT))
-    s.send(data)
-    raw = s.recv(SOCKET_BUFFER).decode()
-    s.close()
-    _LOGGER.debug("Commande envoyee: %s", data)
-    _LOGGER.debug("Reponse brute: %s", raw)
-    return json.loads(raw)
+    last_error: Exception | None = None
+
+    for attempt in range(1, retries + 1):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(SOCKET_TIMEOUT)
+        try:
+            s.connect((host, TCP_PORT))
+            s.send(data)
+            raw = s.recv(SOCKET_BUFFER).decode()
+            _LOGGER.debug("Commande envoyee: %s", data)
+            _LOGGER.debug("Reponse brute: %s", raw)
+            return json.loads(raw)
+        except (ConnectionRefusedError, OSError, socket.timeout) as ex:
+            last_error = ex
+            _LOGGER.warning(
+                "Connexion au module 4heatlite echouee (tentative %s/%s): %s",
+                attempt,
+                retries,
+                ex,
+            )
+            if attempt < retries:
+                time.sleep(retry_delay)
+        finally:
+            s.close()
+
+    raise last_error
 
 
 class FourHeatDataUpdateCoordinator(DataUpdateCoordinator):
