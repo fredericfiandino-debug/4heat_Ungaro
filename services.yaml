@@ -1,12 +1,27 @@
-
-set_value:
-  name: Set value
-  description: Sets val speed.
+set_temperature:
+  name: Régler la consigne de température
+  description: >
+    Change la consigne de température (en degrés Celsius) d'un thermostat du
+    poêle (paramètre de type 0x12, ex: consigne ambiance "005a"). Nécessite
+    que l'entité ait déjà été mise à jour au moins une fois par le
+    coordinator (attribut reading_id présent).
   fields:
     entity_id:
-      description: Id of the entiy to set
-      example: "sendor.something"
+      name: Entité
+      description: Entité du capteur de consigne à modifier.
+      example: "sensor.poele_consigne_temperature"
+      required: true
+      selector:
+        entity:
+          domain: sensor
     value:
-      description: value to set
-      example: "5"
-
+      name: Température
+      description: Nouvelle consigne en degrés Celsius.
+      example: 22.5
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 40
+          step: 0.5
+          unit_of_measurement: "°C"
