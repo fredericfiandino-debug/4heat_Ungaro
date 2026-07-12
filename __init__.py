@@ -1,24 +1,16 @@
-""" Integration for 4heat"""
-import voluptuous as vol
+"""Integration for 4heatlite."""
 import logging
 
+import voluptuous as vol
+
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
-from homeassistant.core import valid_entity_id
-from homeassistant.core import (
-    HomeAssistant,
-)
-from homeassistant.const import (
-    CONF_HOST,
-    CONF_NAME,
-    CONF_MONITORED_CONDITIONS,
-)
+from homeassistant.core import HomeAssistant, valid_entity_id
+from homeassistant.const import CONF_HOST, CONF_NAME
+from homeassistant.exceptions import ConfigEntryNotReady
 
 import homeassistant.helpers.config_validation as cv
 
-from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers.typing import ConfigType
-
-from .const import ATTR_MARKER, ATTR_READING_ID, ATTR_STOVE_ID, DOMAIN, DATA_COORDINATOR, CONF_MODE
+from .const import ATTR_READING_ID, ATTR_STOVE_ID, DOMAIN, DATA_COORDINATOR
 from .coordinator import FourHeatDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,8 +21,6 @@ CONFIG_SCHEMA = vol.Schema(
             {
                 vol.Required(CONF_NAME): cv.string,
                 vol.Required(CONF_HOST): cv.string,
-                vol.Optional(CONF_MODE, default=False): cv.boolean,
-                vol.Optional(CONF_MONITORED_CONDITIONS): cv.ensure_list,
             }
         )
     },
@@ -53,7 +43,6 @@ async def async_setup(hass, config):
     return True
 
 
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Load the saved entities."""
     coordinator = FourHeatDataUpdateCoordinator(
@@ -72,38 +61,37 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         DATA_COORDINATOR: coordinator,
     }
 
+    async def async_handle_set_temperature(call):
+        """Handle the service call to set a temperature setpoint (parametre type 0x12).
 
-    async def async_handle_set_value(call):
-        """Handle the service call to set a value."""
-        entity_id = call.data.get('entity_id', '')
-        value = call.data.get('value', 5)        
-        val = 1
-        if isinstance(value, str):
-            if value.isnumeric():
-                val = int(value)
-            elif valid_entity_id(value):
-                val = int(float(hass.states.get(value).state))
-        else:
-            val = value
+        Contrairement a l'ancien protocole (marqueur 'B' + valeur brute), on
+        ecrit maintenant via l'algorithme confirme dans coordinator.async_set_temperature,
+        qui a besoin de la derniere trame lue (bornes min/max) pour ce parametre.
+        """
+        entity_id = call.data.get("entity_id", "")
+        value = call.data.get("value")
 
-        if valid_entity_id(entity_id):
-            e_id = hass.states.get(entity_id)
-            if e_id.attributes[ATTR_MARKER] == 'B':
-                c = hass.data[DOMAIN][e_id.attributes[ATTR_STOVE_ID]][DATA_COORDINATOR]
-                await c.async_set_value(e_id.attributes[ATTR_READING_ID], val)
-                await c.async_request_refresh()
-            else:
-                _LOGGER.error(f'"{entity_id}" is not valid to be set')
-        else:
-            _LOGGER.error(f'"{entity_id}" is no valid entity ID')
+        if not valid_entity_id(entity_id):
+            _LOGGER.error('"%s" n\'est pas un entity_id valide', entity_id)
+            return
 
-    
-    hass.services.async_register(DOMAIN, "set_value", async_handle_set_value)
+        state = hass.states.get(entity_id)
+        if state is None or ATTR_READING_ID not in state.attributes:
+            _LOGGER.error(
+                '"%s" n\'a pas d\'attribut %s, impossible d\'ecrire une valeur',
+                entity_id,
+                ATTR_READING_ID,
+            )
+            return
 
-    """hass.async_create_task("""
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
-    """)"""
-    """hass.async_create_task("""
-    await hass.config_entries.async_forward_entry_setups(entry, ["switch"])
-    """)"""
+        reading_id = state.attributes[ATTR_READING_ID]
+        stove_id = state.attributes.get(ATTR_STOVE_ID, entry.entry_id)
+        coord = hass.data[DOMAIN][stove_id][DATA_COORDINATOR]
+
+        await coord.async_set_temperature(reading_id, float(value))
+        await coord.async_request_refresh()
+
+    hass.services.async_register(DOMAIN, "set_temperature", async_handle_set_temperature)
+
+    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "switch"])
     return True
